@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>A Message from the Chicago Mouse</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0a0a1a;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: 100vh;
+    min-height: 100dvh;
+    font-family: 'Georgia', serif;
+    overflow-x: hidden;
+    padding: 12px 0 20px;
+  }
+
+  #scene-wrapper {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    /* height set dynamically by JS */
+  }
+
+  #scene {
+    position: relative;
+    width: 900px;
+    height: 600px;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 0 60px rgba(100,150,255,0.3);
+    transform-origin: top center;
+    flex-shrink: 0;
+  }
+
+  /* Night sky */
+  #sky {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, #050510 0%, #0d1035 50%, #1a1050 100%);
+  }
+
+  .star {
+    position: absolute;
+    border-radius: 50%;
+    background: white;
+    animation: twinkle var(--dur, 3s) ease-in-out infinite;
+    animation-delay: var(--delay, 0s);
+  }
+
+  @keyframes twinkle {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.2; transform: scale(0.5); }
+  }
+
+  /* Moon */
+  #moon {
+    position: absolute;
+    top: 40px;
+    right: 100px;
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #fffde0, #f5d060);
+    box-shadow: 0 0 30px rgba(245,210,80,0.5), 0 0 60px rgba(245,210,80,0.2);
+  }
+
+  /* Chicago skyline */
+  #skyline {
+    position: absolute;
+    bottom: 180px;
+    left: 0;
+    right: 0;
+  }
+
+  /* Ground/floor */
+  #ground {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 180px;
+    background: linear-gradient(180deg, #1a0f05 0%, #0d0802 100%);
+  }
+
+  /* Floor decorations */
+  #floor-detail {
+    position: absolute;
+    bottom: 168px;
+    left: 0;
+    right: 0;
+    height: 12px;
+    background: repeating-linear-gradient(90deg, #2a1a08 0px, #2a1a08 60px, #1e1205 60px, #1e1205 120px);
+    border-top: 2px solid #3d2510;
+  }
+
+  /* Baseboard / wall */
+  #wall {
+    position: absolute;
+    bottom: 180px;
+    left: 0;
+    right: 0;
+    height: 40px;
+    background: #3a2010;
+    border-top: 3px solid #5a3520;
+    border-bottom: 3px solid #2a1508;
+  }
+
+  /* Mouse hole */
+  #mouse-hole {
+    position: absolute;
+    bottom: 180px;
+    left: 120px;
+    width: 80px;
+    height: 100px;
+    background: #050302;
+    border-radius: 50% 50% 0 0 / 60% 60% 0 0;
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.9), 0 0 10px rgba(0,0,0,0.5);
+  }
+
+  /* Cheese prop */
+  #cheese {
+    position: absolute;
+    bottom: 180px;
+    right: 200px;
+  }
+
+  /* Mouse character */
+  #mouse-container {
+    position: absolute;
+    bottom: 175px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 200px;
+    animation: mouseIdle 4s ease-in-out infinite;
+    transform-origin: bottom center;
+  }
+
+  @keyframes mouseIdle {
+    0%, 100% { transform: translateX(-50%) rotate(-1deg); }
+    50% { transform: translateX(-50%) rotate(1deg); }
+  }
+
+  /* Speech bubble */
+  #speech-bubble {
+    position: absolute;
+    top: 50px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255,255,255,0.97);
+    border-radius: 20px;
+    padding: 20px 28px;
+    width: 700px;
+    min-height: 120px;
+    box-shadow: 0 4px 30px rgba(0,0,0,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    opacity: 0;
+    transition: opacity 0.6s ease;
+  }
+
+  #speech-bubble::after {
+    content: '';
+    position: absolute;
+    bottom: -28px;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 14px solid transparent;
+    border-top-color: rgba(255,255,255,0.97);
+  }
+
+  #speech-text {
+    font-size: clamp(14px, 2.4vw, 22px);
+    color: #1a1a2e;
+    line-height: 1.5;
+    font-style: italic;
+  }
+
+  .emoji-accent { font-style: normal; }
+
+  /* Name tag */
+  #name-tag {
+    position: absolute;
+    bottom: 300px;
+    left: calc(50% + 108px);
+    background: rgba(255,200,0,0.9);
+    color: #1a1a00;
+    padding: 4px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: bold;
+    border: 2px solid rgba(200,150,0,0.8);
+    opacity: 0;
+    transition: opacity 0.5s;
+    white-space: nowrap;
+  }
+
+  #name-tag::before {
+    content: '';
+    position: absolute;
+    right: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    border: 6px solid transparent;
+    border-right-color: rgba(200,150,0,0.8);
+  }
+
+  /* Start button */
+  #start-btn {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: linear-gradient(135deg, #ff6b8a, #ff3d6b);
+    color: white;
+    border: none;
+    padding: 20px 50px;
+    font-size: 22px;
+    border-radius: 50px;
+    cursor: pointer;
+    box-shadow: 0 6px 30px rgba(255,61,107,0.5);
+    z-index: 100;
+    transition: transform 0.2s, box-shadow 0.2s;
+    font-family: 'Georgia', serif;
+  }
+
+  #start-btn:hover {
+    transform: translate(-50%, -50%) scale(1.05);
+    box-shadow: 0 8px 40px rgba(255,61,107,0.7);
+  }
+
+  /* Progress dots */
+  #progress {
+    position: absolute;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    opacity: 0;
+    transition: opacity 0.5s;
+  }
+
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.3);
+    transition: background 0.3s;
+  }
+
+  .dot.active { background: rgba(255,200,100,0.9); }
+
+  /* Title */
+  #title {
+    position: absolute;
+    top: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: rgba(255,220,150,0.85);
+    font-size: 15px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.5s;
+  }
+
+  /* Scarf decoration on mouse */
+  .scarf {
+    animation: scarfWave 2s ease-in-out infinite;
+  }
+
+  @keyframes scarfWave {
+    0%, 100% { transform: rotate(-5deg); }
+    50% { transform: rotate(5deg); }
+  }
+
+  /* Birthday hat */
+  #birthday-hat-group {
+    opacity: 0;
+    transition: opacity 0.8s;
+  }
+
+  /* Confetti */
+  .confetti {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    opacity: 0;
+    animation: fall 3s ease-in forwards;
+    border-radius: 2px;
+  }
+
+  @keyframes fall {
+    0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(200px) rotate(720deg); opacity: 0; }
+  }
+
+  /* Mouth animation */
+  @keyframes talk {
+    0%, 100% { d: path("M 85 92 Q 100 98 115 92"); }
+    50% { d: path("M 85 94 Q 100 106 115 94"); }
+  }
+
+
+  /* Blink */
+  @keyframes blink {
+    0%, 90%, 100% { transform: scaleY(1); }
+    95% { transform: scaleY(0.05); }
+  }
+
+  #left-eye-lid, #right-eye-lid {
+    animation: blink 4s ease-in-out infinite;
+    transform-origin: center;
+    transform-box: fill-box;
+  }
+
+  /* Tail wag */
+  @keyframes tailWag {
+    0%, 100% { d: path("M 155 230 Q 200 250 240 220 Q 280 190 300 210"); }
+    50% { d: path("M 155 230 Q 200 260 250 240 Q 290 215 310 230"); }
+  }
+
+  #mouse-tail {
+    animation: tailWag 2s ease-in-out infinite;
+  }
+
+  /* Ear pulse when happy */
+  @keyframes earPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+  }
+</style>
+</head>
+<body>
+
+<div id="scene-wrapper">
+<div id="scene">
+  <!-- Sky -->
+  <div id="sky"></div>
+
+  <!-- Moon -->
+  <div id="moon"></div>
+
+  <!-- Stars (generated by JS) -->
+  <div id="stars"></div>
+
+  <!-- Chicago Skyline SVG -->
+  <div id="skyline">
+    <svg width="900" height="220" viewBox="0 0 900 220" xmlns="http://www.w3.org/2000/svg">
+      <!-- City glow -->
+      <defs>
+        <linearGradient id="buildingGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" style="stop-color:#2a1a4a"/>
+          <stop offset="100%" style="stop-color:#0d0820"/>
+        </linearGradient>
+        <linearGradient id="buildingGrad2" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" style="stop-color:#1a1535"/>
+          <stop offset="100%" style="stop-color:#080614"/>
+        </linearGradient>
+        <filter id="glow">
+          <feGaussianBlur stdDeviation="2" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+
+      <!-- Far buildings -->
+      <rect x="0"   y="120" width="60"  height="100" fill="url(#buildingGrad2)" rx="1"/>
+      <rect x="5"   y="100" width="30"  height="120" fill="url(#buildingGrad2)" rx="1"/>
+      <rect x="30"  y="80"  width="15"  height="140" fill="url(#buildingGrad2)" rx="1"/>
+      <rect x="40"  y="90"  width="40"  height="130" fill="url(#buildingGrad2)" rx="1"/>
+      <rect x="70"  y="60"  width="50"  height="160" fill="url(#buildingGrad2)" rx="1"/>
+      <rect x="110" y="110" width="35"  height="110" fill="url(#buildingGrad2)" rx="1"/>
+      <rect x="130" y="70"  width="25"  height="150" fill="url(#buildingGrad2)" rx="1"/>
+
+      <!-- Willis (Sears) Tower - iconic stepped silhouette -->
+      <rect x="350" y="0"   width="48" height="220" fill="url(#buildingGrad)" rx="1"/>
+      <rect x="345" y="40"  width="58" height="180" fill="url(#buildingGrad)" rx="1"/>
+      <rect x="340" y="80"  width="68" height="140" fill="url(#buildingGrad)" rx="1"/>
+      <rect x="335" y="100" width="78" height="120" fill="url(#buildingGrad)" rx="1"/>
+      <!-- Antenna -->
+      <rect x="368" y="-30"  width="3"  height="35" fill="#3a2a5a"/>
+      <rect x="374" y="-15"  width="3"  height="20" fill="#3a2a5a"/>
+      <!-- Blinking light on top -->
+      <circle cx="370" cy="-32" r="3" fill="#ff3333" opacity="0.8">
+        <animate attributeName="opacity" values="0.8;0.1;0.8" dur="2s" repeatCount="indefinite"/>
+      </circle>
+
+      <!-- John Hancock style -->
+      <polygon points="550,220 570,60 620,60 640,220" fill="url(#buildingGrad)" />
+      <rect x="575" y="55" width="40" height="170" fill="url(#buildingGrad)"/>
+      <!-- Antenna -->
+      <line x1="590" y1="55" x2="587" y2="10" stroke="#2a1a4a" stroke-width="3"/>
+      <line x1="600" y1="55" x2="603" y2="10" stroke="#2a1a4a" stroke-width="3"/>
+
+      <!-- Other buildings -->
+      <rect x="155" y="90"  width="55"  height="130" fill="url(#buildingGrad)" rx="1"/>
+      <rect x="200" y="50"  width="40"  height="170" fill="url(#buildingGrad2)" rx="1"/>
+      <rect x="230" y="110" width="30"  height="110" fill="url(#buildingGrad)" rx="1"/>
+      <rect x="250" y="70"  width="45"  height="150" fill="url(#buildingGrad2)" rx="1"/>
+      <rect x="285" y="100" width="35"  height="120" fill="url(#buildingGrad)" rx="1"/>
+      <rect x="300" y="60"  width="40"  height="160" fill="url(#buildingGrad2)" rx="1"/>
+
+      <rect x="415" y="80"  width="50"  height="140" fill="url(#buildingGrad)" rx="1"/>
+      <rect x="450" y="110" width="35"  height="110" fill="url(#buildingGrad2)" rx="1"/>
+      <rect x="460" y="70"  width="45"  height="150" fill="url(#buildingGrad)" rx="1"/>
+      <rect x="490" y="90"  width="50"  height="130" fill="url(#buildingGrad2)" rx="1"/>
+      <rect x="520" y="60"  width="35"  height="160" fill="url(#buildingGrad)" rx="1"/>
+
+      <rect x="645" y="80"  width="55"  height="140" fill="url(#buildingGrad)" rx="1"/>
+      <rect x="690" y="100" width="40"  height="120" fill="url(#buildingGrad2)" rx="1"/>
+      <rect x="720" y="60"  width="50"  height="160" fill="url(#buildingGrad)" rx="1"/>
+      <rect x="760" y="90"  width="45"  height="130" fill="url(#buildingGrad2)" rx="1"/>
+      <rect x="790" y="50"  width="40"  height="170" fill="url(#buildingGrad)" rx="1"/>
+      <rect x="820" y="80"  width="55"  height="140" fill="url(#buildingGrad2)" rx="1"/>
+      <rect x="855" y="70"  width="45"  height="150" fill="url(#buildingGrad)" rx="1"/>
+
+      <!-- Window lights -->
+      <g fill="rgba(255,240,180,0.6)" opacity="0.7">
+        <!-- Willis Tower windows -->
+        <rect x="348" y="110" width="5" height="4" rx="1"/>
+        <rect x="360" y="110" width="5" height="4" rx="1"/>
+        <rect x="372" y="110" width="5" height="4" rx="1"/>
+        <rect x="384" y="110" width="5" height="4" rx="1"/>
+        <rect x="348" y="125" width="5" height="4" rx="1"/>
+        <rect x="372" y="125" width="5" height="4" rx="1"/>
+        <rect x="360" y="140" width="5" height="4" rx="1"/>
+        <rect x="384" y="140" width="5" height="4" rx="1"/>
+        <rect x="348" y="155" width="5" height="4" rx="1"/>
+        <rect x="360" y="155" width="5" height="4" rx="1"/>
+
+        <!-- Random building windows -->
+        <rect x="162" y="100" width="4" height="3" rx="1"/>
+        <rect x="172" y="100" width="4" height="3" rx="1"/>
+        <rect x="162" y="115" width="4" height="3" rx="1"/>
+        <rect x="208" y="65"  width="4" height="3" rx="1"/>
+        <rect x="218" y="65"  width="4" height="3" rx="1"/>
+        <rect x="208" y="80"  width="4" height="3" rx="1"/>
+        <rect x="308" y="75"  width="4" height="3" rx="1"/>
+        <rect x="318" y="75"  width="4" height="3" rx="1"/>
+        <rect x="308" y="90"  width="4" height="3" rx="1"/>
+        <rect x="466" y="85"  width="4" height="3" rx="1"/>
+        <rect x="476" y="85"  width="4" height="3" rx="1"/>
+        <rect x="466" y="100" width="4" height="3" rx="1"/>
+        <rect x="655" y="95"  width="4" height="3" rx="1"/>
+        <rect x="665" y="95"  width="4" height="3" rx="1"/>
+        <rect x="727" y="75"  width="4" height="3" rx="1"/>
+        <rect x="737" y="75"  width="4" height="3" rx="1"/>
+        <rect x="798" y="65"  width="4" height="3" rx="1"/>
+        <rect x="808" y="65"  width="4" height="3" rx="1"/>
+      </g>
+
+      <!-- City glow at base -->
+      <rect x="0" y="200" width="900" height="20" fill="rgba(60,30,100,0.4)"/>
+    </svg>
+  </div>
+
+  <!-- Ground -->
+  <div id="ground"></div>
+  <div id="floor-detail"></div>
+  <div id="wall"></div>
+
+  <!-- Mouse hole -->
+  <div id="mouse-hole"></div>
+
+  <!-- Cheese prop -->
+  <div id="cheese">
+    <svg width="80" height="70" viewBox="0 0 80 70" xmlns="http://www.w3.org/2000/svg">
+      <polygon points="5,65 75,65 65,10" fill="#f5c842"/>
+      <polygon points="5,65 75,65 65,10" fill="none" stroke="#d4a017" stroke-width="2"/>
+      <!-- Holes -->
+      <circle cx="35" cy="45" r="8" fill="#d4a017" opacity="0.6"/>
+      <circle cx="55" cy="35" r="6" fill="#d4a017" opacity="0.6"/>
+      <circle cx="25" cy="55" r="5" fill="#d4a017" opacity="0.6"/>
+    </svg>
+  </div>
+
+  <!-- Small mice in background -->
+  <svg style="position:absolute;bottom:182px;left:80px;opacity:0.5" width="30" height="30" viewBox="0 0 30 30">
+    <ellipse cx="15" cy="20" rx="8" ry="6" fill="#8a7a7a"/>
+    <circle cx="15" cy="12" r="7" fill="#8a7a7a"/>
+    <circle cx="11" cy="7" r="5" fill="#8a7a7a"/>
+    <circle cx="19" cy="7" r="5" fill="#8a7a7a"/>
+    <circle cx="11" cy="7" r="3" fill="#d4a0a0"/>
+    <circle cx="19" cy="7" r="3" fill="#d4a0a0"/>
+  </svg>
+
+  <!-- Main Mouse Character -->
+  <div id="mouse-container">
+    <svg id="mouse-svg" width="200" height="280" viewBox="0 0 200 280" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="bodyGrad" cx="40%" cy="40%">
+          <stop offset="0%" style="stop-color:#c0aeae"/>
+          <stop offset="100%" style="stop-color:#8a7272"/>
+        </radialGradient>
+        <radialGradient id="headGrad" cx="35%" cy="35%">
+          <stop offset="0%" style="stop-color:#cebebe"/>
+          <stop offset="100%" style="stop-color:#9a8282"/>
+        </radialGradient>
+        <radialGradient id="earGrad" cx="35%" cy="35%">
+          <stop offset="0%" style="stop-color:#e8c8c8"/>
+          <stop offset="100%" style="stop-color:#b89090"/>
+        </radialGradient>
+        <radialGradient id="innerEarGrad" cx="50%" cy="50%">
+          <stop offset="0%" style="stop-color:#ffb0b0"/>
+          <stop offset="100%" style="stop-color:#e07070"/>
+        </radialGradient>
+      </defs>
+
+      <!-- Tail -->
+      <path id="mouse-tail" d="M 155 230 Q 200 250 240 220 Q 280 190 300 210"
+            fill="none" stroke="#8a7272" stroke-width="5" stroke-linecap="round"/>
+
+      <!-- Body -->
+      <ellipse cx="100" cy="210" rx="55" ry="65" fill="url(#bodyGrad)"/>
+
+      <!-- Tiny feet -->
+      <ellipse cx="70"  cy="268" rx="18" ry="9" fill="#8a7272"/>
+      <ellipse cx="130" cy="268" rx="18" ry="9" fill="#8a7272"/>
+      <!-- Toes left -->
+      <circle cx="57"  cy="270" r="6" fill="#7a6262"/>
+      <circle cx="67"  cy="274" r="6" fill="#7a6262"/>
+      <circle cx="78"  cy="275" r="6" fill="#7a6262"/>
+      <!-- Toes right -->
+      <circle cx="117" cy="270" r="6" fill="#7a6262"/>
+      <circle cx="127" cy="274" r="6" fill="#7a6262"/>
+      <circle cx="138" cy="275" r="6" fill="#7a6262"/>
+
+      <!-- Little arms/paws -->
+      <ellipse cx="48"  cy="190" rx="14" ry="10" fill="#9a8282" transform="rotate(-30 48 190)"/>
+      <ellipse cx="152" cy="190" rx="14" ry="10" fill="#9a8282" transform="rotate(30 152 190)"/>
+      <!-- Paw details -->
+      <circle cx="38"  cy="188" r="5" fill="#8a7070"/>
+      <circle cx="46"  cy="182" r="5" fill="#8a7070"/>
+      <circle cx="55"  cy="182" r="5" fill="#8a7070"/>
+      <circle cx="145" cy="182" r="5" fill="#8a7070"/>
+      <circle cx="154" cy="182" r="5" fill="#8a7070"/>
+      <circle cx="162" cy="188" r="5" fill="#8a7070"/>
+
+      <!-- Belly -->
+      <ellipse cx="100" cy="220" rx="30" ry="40" fill="#d4c0b0" opacity="0.6"/>
+
+      <!-- Birthday hat (hidden initially, shown on birthday segment) -->
+      <g id="birthday-hat-group">
+        <polygon points="100,30 70,95 130,95" fill="#ff6b8a"/>
+        <polygon points="100,30 70,95 130,95" fill="none" stroke="#ff3d6b" stroke-width="2"/>
+        <!-- Hat stripes -->
+        <line x1="85" y1="62" x2="112" y2="62" stroke="#ffcc00" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
+        <line x1="79" y1="78" x2="121" y2="78" stroke="#ffcc00" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
+        <!-- Pompom -->
+        <circle cx="100" cy="30" r="10" fill="#ffcc00"/>
+        <circle cx="97" cy="27" r="4" fill="rgba(255,255,255,0.5)"/>
+        <!-- Hat band -->
+        <rect x="70" y="90" width="60" height="8" fill="#c0392b" rx="2"/>
+        <!-- Stars on hat -->
+        <text x="88" y="58" font-size="10" fill="white" opacity="0.9">★</text>
+        <text x="102" y="72" font-size="8" fill="white" opacity="0.9">★</text>
+      </g>
+
+      <!-- Head -->
+      <circle cx="100" cy="105" r="52" fill="url(#headGrad)"/>
+
+      <!-- Left ear -->
+      <circle cx="58" cy="65" r="28" fill="url(#earGrad)"/>
+      <circle cx="58" cy="65" r="17" fill="url(#innerEarGrad)"/>
+
+      <!-- Right ear -->
+      <circle cx="142" cy="65" r="28" fill="url(#earGrad)"/>
+      <circle cx="142" cy="65" r="17" fill="url(#innerEarGrad)"/>
+
+      <!-- Head again (on top of ear overlap) -->
+      <circle cx="100" cy="107" r="50" fill="url(#headGrad)"/>
+
+      <!-- Tiny ear detail lines -->
+      <path d="M 62 52 Q 58 65 54 78" fill="none" stroke="rgba(200,130,130,0.4)" stroke-width="2"/>
+      <path d="M 138 52 Q 142 65 146 78" fill="none" stroke="rgba(200,130,130,0.4)" stroke-width="2"/>
+
+      <!-- Eyes -->
+      <!-- Left eye white -->
+      <circle cx="80" cy="95" r="14" fill="white"/>
+      <!-- Left iris -->
+      <circle cx="82" cy="96" r="10" fill="#2a1a1a"/>
+      <!-- Left pupil shine -->
+      <circle cx="85" cy="92" r="4" fill="white"/>
+      <circle cx="88" cy="94" r="2" fill="white" opacity="0.6"/>
+      <!-- Left eyelid (for blinking) -->
+      <ellipse id="left-eye-lid" cx="80" cy="95" rx="14" ry="14" fill="url(#headGrad)" opacity="0"/>
+
+      <!-- Right eye white -->
+      <circle cx="120" cy="95" r="14" fill="white"/>
+      <!-- Right iris -->
+      <circle cx="118" cy="96" r="10" fill="#2a1a1a"/>
+      <!-- Right pupil shine -->
+      <circle cx="115" cy="92" r="4" fill="white"/>
+      <circle cx="112" cy="94" r="2" fill="white" opacity="0.6"/>
+      <!-- Right eyelid (for blinking) -->
+      <ellipse id="right-eye-lid" cx="120" cy="95" rx="14" ry="14" fill="url(#headGrad)" opacity="0"/>
+
+      <!-- Nose -->
+      <ellipse cx="100" cy="118" rx="8" ry="6" fill="#e87070"/>
+      <ellipse cx="98" cy="116" rx="3" ry="2" fill="rgba(255,180,180,0.6)"/>
+
+      <!-- Whiskers left -->
+      <line x1="100" y1="120" x2="40"  y2="112" stroke="#6a5a5a" stroke-width="1.5" stroke-linecap="round" opacity="0.7"/>
+      <line x1="100" y1="122" x2="40"  y2="122" stroke="#6a5a5a" stroke-width="1.5" stroke-linecap="round" opacity="0.7"/>
+      <line x1="100" y1="124" x2="40"  y2="132" stroke="#6a5a5a" stroke-width="1.5" stroke-linecap="round" opacity="0.7"/>
+
+      <!-- Whiskers right -->
+      <line x1="100" y1="120" x2="160" y2="112" stroke="#6a5a5a" stroke-width="1.5" stroke-linecap="round" opacity="0.7"/>
+      <line x1="100" y1="122" x2="160" y2="122" stroke="#6a5a5a" stroke-width="1.5" stroke-linecap="round" opacity="0.7"/>
+      <line x1="100" y1="124" x2="160" y2="132" stroke="#6a5a5a" stroke-width="1.5" stroke-linecap="round" opacity="0.7"/>
+
+      <!-- Mouth - animated when talking -->
+      <path id="mouse-mouth" d="M 85 132 Q 100 138 115 132"
+            fill="none" stroke="#5a3a3a" stroke-width="3" stroke-linecap="round"/>
+
+      <!-- Scarf -->
+      <g class="scarf" transform-origin="100 155">
+        <path d="M 60 148 Q 100 158 140 148 Q 140 168 100 172 Q 60 168 60 148 Z"
+              fill="#cc3366" opacity="0.9"/>
+        <path d="M 60 148 Q 100 158 140 148" fill="none" stroke="#aa1144" stroke-width="2"/>
+        <!-- Scarf stripes -->
+        <path d="M 60 153 Q 100 163 140 153" fill="none" stroke="rgba(255,200,220,0.5)" stroke-width="2"/>
+        <path d="M 60 160 Q 100 170 140 160" fill="none" stroke="rgba(255,200,220,0.5)" stroke-width="2"/>
+        <!-- Scarf tail -->
+        <path d="M 140 148 Q 150 155 145 175 Q 140 190 148 200"
+              fill="none" stroke="#cc3366" stroke-width="10" stroke-linecap="round"/>
+        <path d="M 140 148 Q 150 155 145 175 Q 140 190 148 200"
+              fill="none" stroke="rgba(255,200,220,0.3)" stroke-width="4" stroke-linecap="round"/>
+      </g>
+
+      <!-- Knitting needles (shown on knitting segment) -->
+      <g id="knitting-group" opacity="0">
+        <line x1="38" y1="200" x2="75" y2="170" stroke="#c0a060" stroke-width="4" stroke-linecap="round"/>
+        <circle cx="38" cy="200" r="5" fill="#e0b060"/>
+        <line x1="52" y1="205" x2="80" y2="168" stroke="#c0a060" stroke-width="4" stroke-linecap="round"/>
+        <circle cx="52" cy="205" r="5" fill="#e0b060"/>
+        <!-- Mini scarf in progress -->
+        <path d="M 55 175 Q 65 172 75 175 Q 75 180 65 182 Q 55 180 55 175Z" fill="#cc3366" opacity="0.7"/>
+      </g>
+    </svg>
+  </div>
+
+  <!-- Name tag -->
+  <div id="name-tag">Chicago Mouse</div>
+
+  <!-- Speech bubble -->
+  <div id="speech-bubble">
+    <div id="speech-text"></div>
+  </div>
+
+  <!-- Title -->
+  <div id="title">A Special Birthday Message for Murielle</div>
+
+  <!-- Progress dots -->
+  <div id="progress"></div>
+
+  <!-- Confetti container -->
+  <div id="confetti-container"></div>
+
+  <!-- Start button -->
+  <button id="start-btn" onclick="startShow()">Play Birthday Message</button>
+</div>
+</div>
+
+<div style="margin-top:16px;text-align:center;padding:0 16px">
+  <a href="index.html" download="murielle_birthday_mouse.html" style="
+    display:inline-block;
+    background:linear-gradient(135deg,#4a90d9,#2c6fad);
+    color:white;border:none;padding:14px 36px;font-size:16px;
+    border-radius:50px;cursor:pointer;text-decoration:none;
+    box-shadow:0 4px 18px rgba(44,111,173,0.4);font-family:Georgia,serif;
+    min-height:48px;line-height:1.2;
+  ">Download</a>
+</div>
+
+<script>
+// Generate stars
+const starsContainer = document.getElementById('stars');
+for (let i = 0; i < 120; i++) {
+  const star = document.createElement('div');
+  star.className = 'star';
+  const size = Math.random() * 2.5 + 0.5;
+  star.style.cssText = `
+    width: ${size}px; height: ${size}px;
+    left: ${Math.random() * 100}%;
+    top: ${Math.random() * 55}%;
+    --dur: ${2 + Math.random() * 4}s;
+    --delay: ${Math.random() * 4}s;
+    opacity: ${0.4 + Math.random() * 0.6};
+  `;
+  starsContainer.appendChild(star);
+}
+
+// Message segments
+const segments = [
+  {
+    text: "Hello Murielle... I am the mouse you're trying to catch.",
+    duration: 4500
+  },
+  {
+    text: "You're living in <em>my</em> house. Thank you for always paying the rent — I really appreciate it.",
+    duration: 5000
+  },
+  {
+    text: "I have a big family. Like... <em>very</em> big.",
+    duration: 4000
+  },
+  {
+    text: "We snack a lot. You've noticed.",
+    duration: 3500,
+    cheeseBounce: true
+  },
+  {
+    text: "I heard you're turning 30...<br>So I wanted to wish you a <strong>happy birthday month!</strong>",
+    duration: 5000,
+    showHat: true,
+    confetti: true
+  },
+  {
+    text: "Filled with love, laughter... and <em>fewer</em> mouse traps.",
+    duration: 4500
+  },
+  {
+    text: "I am so sad knowing that you are leaving Chicago soon...",
+    duration: 4500
+  },
+  {
+    text: "It's been great having you as a tenant — you and your husband <strong>André</strong>.",
+    duration: 4500
+  },
+  {
+    text: "Also... I see you knit so well.<br>Can I ask you for a favor?",
+    duration: 4500,
+    showKnitting: true
+  },
+  {
+    text: "Can you make scarves for my <strong>50 cousins</strong>?<br>It would really be appreciated...",
+    duration: 5000
+  },
+  {
+    text: "Especially since... you eliminated a few of them.",
+    duration: 4000
+  },
+  {
+    text: "But it's okay! We forgive! We grow!",
+    duration: 4000,
+    confetti: true
+  },
+  {
+    text: "Anyways...<br><strong>Love,<br>The Chicago Mice</strong>",
+    duration: 6000,
+    showHat: true,
+    confetti: true
+  }
+];
+
+// Generate progress dots
+const progressEl = document.getElementById('progress');
+segments.forEach((_, i) => {
+  const dot = document.createElement('div');
+  dot.className = 'dot';
+  dot.id = `dot-${i}`;
+  progressEl.appendChild(dot);
+});
+
+let currentSegment = 0;
+let isRunning = false;
+let speechSynth = window.speechSynthesis;
+let currentUtterance = null;
+let talkingInterval = null;
+
+const MOUTH_CLOSED = 'M 85 132 Q 100 138 115 132';
+const MOUTH_OPEN   = 'M 85 134 Q 100 152 115 134';
+let mouthOpen = false;
+
+function setTalking(on) {
+  const mouth = document.getElementById('mouse-mouth');
+  if (on) {
+    if (talkingInterval) return;
+    talkingInterval = setInterval(() => {
+      mouthOpen = !mouthOpen;
+      mouth.setAttribute('d', mouthOpen ? MOUTH_OPEN : MOUTH_CLOSED);
+    }, 160);
+  } else {
+    clearInterval(talkingInterval);
+    talkingInterval = null;
+    mouthOpen = false;
+    mouth.setAttribute('d', MOUTH_CLOSED);
+  }
+}
+
+function spawnConfetti() {
+  const container = document.getElementById('confetti-container');
+  const colors = ['#ff6b8a','#ffcc00','#6bffd4','#8b6bff','#ff9f43','#48dbfb'];
+  for (let i = 0; i < 30; i++) {
+    setTimeout(() => {
+      const el = document.createElement('div');
+      el.className = 'confetti';
+      el.style.cssText = `
+        left: ${20 + Math.random() * 60}%;
+        top: ${10 + Math.random() * 30}%;
+        background: ${colors[Math.floor(Math.random() * colors.length)]};
+        width: ${6 + Math.random() * 10}px;
+        height: ${6 + Math.random() * 10}px;
+        border-radius: ${Math.random() > 0.5 ? '50%' : '2px'};
+        animation-delay: ${Math.random() * 0.5}s;
+        animation-duration: ${2 + Math.random() * 2}s;
+      `;
+      container.appendChild(el);
+      setTimeout(() => el.remove(), 4000);
+    }, i * 80);
+  }
+}
+
+function getVoice() {
+  const voices = speechSynth.getVoices();
+  return voices.find(v =>
+    v.name.toLowerCase().includes('samantha') ||
+    v.name.toLowerCase().includes('karen') ||
+    v.name.toLowerCase().includes('moira') ||
+    v.name.toLowerCase().includes('female') ||
+    (v.lang.startsWith('en') && v.name.toLowerCase().includes('google'))
+  ) || voices.find(v => v.lang.startsWith('en')) || voices[0];
+}
+
+function speakText(text) {
+  if (!speechSynth) return Promise.resolve();
+  speechSynth.cancel();
+
+  const plain = text.replace(/<[^>]+>/g, '').replace(/&[^;]+;/g, ' ').trim();
+  const phrases = plain.split(/(?<=[.!?,…\-—])\s+/).filter(p => p.trim().length > 0);
+  const voice = getVoice();
+
+  return new Promise(resolve => {
+    function speakPhrase(i) {
+      if (i >= phrases.length) {
+        setTalking(false);
+        resolve();
+        return;
+      }
+      const utt = new SpeechSynthesisUtterance(phrases[i]);
+      utt.rate = 1.05;
+      utt.pitch = 1.3;
+      utt.volume = 1;
+      if (voice) utt.voice = voice;
+
+      utt.onstart = () => setTalking(true);
+      utt.onend = () => {
+        setTalking(false);
+        setTimeout(() => speakPhrase(i + 1), 750);
+      };
+      utt.onerror = () => {
+        setTalking(false);
+        setTimeout(() => speakPhrase(i + 1), 750);
+      };
+
+      currentUtterance = utt;
+      speechSynth.speak(utt);
+    }
+    speakPhrase(0);
+  });
+}
+
+async function showSegment(index) {
+  if (index >= segments.length) {
+    // Finished
+    setTalking(false);
+    document.getElementById('speech-bubble').style.opacity = '0';
+    return;
+  }
+
+  const seg = segments[index];
+
+  // Update progress dots
+  document.querySelectorAll('.dot').forEach((d, i) => {
+    d.className = 'dot' + (i === index ? ' active' : '');
+  });
+
+  // Show hat?
+  document.getElementById('birthday-hat-group').style.opacity = seg.showHat ? '1' : '0';
+
+  // Show knitting?
+  const knitting = document.getElementById('knitting-group');
+  knitting.style.opacity = seg.showKnitting ? '1' : '0';
+
+  // Confetti?
+  if (seg.confetti) spawnConfetti();
+
+  // Cheese bounce?
+  const cheese = document.getElementById('cheese');
+  if (seg.cheeseBounce) {
+    cheese.style.animation = 'none';
+    cheese.style.transform = 'translateY(-10px)';
+    setTimeout(() => cheese.style.transform = '', 300);
+  }
+
+  // Fade out bubble
+  const bubble = document.getElementById('speech-bubble');
+  const textEl = document.getElementById('speech-text');
+  bubble.style.opacity = '0';
+
+  // Set text immediately and start speaking — no delay
+  textEl.innerHTML = seg.text;
+  const speechPromise = speakText(seg.text);
+
+  // Fade bubble in while speech is already starting
+  await sleep(50);
+  bubble.style.opacity = '1';
+
+  await speechPromise;
+
+  // Short pause before advancing
+  await sleep(800);
+
+  // Next segment
+  if (isRunning) showSegment(index + 1);
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function startShow() {
+  const btn = document.getElementById('start-btn');
+  btn.style.display = 'none';
+
+  document.getElementById('speech-bubble').style.opacity = '1';
+  document.getElementById('title').style.opacity = '1';
+  document.getElementById('progress').style.opacity = '1';
+  document.getElementById('name-tag').style.opacity = '1';
+
+  isRunning = true;
+
+  // Load voices
+  if (speechSynth.getVoices().length === 0) {
+    speechSynth.onvoiceschanged = () => {
+      speechSynth.onvoiceschanged = null;
+      showSegment(0);
+    };
+  } else {
+    showSegment(0);
+  }
+}
+
+// Idle mouse animation - occasionally look around
+function mouseIdle() {
+  const svg = document.getElementById('mouse-svg');
+  setInterval(() => {
+    if (!isRunning) return;
+    // Random small head movement
+    const leftEye = svg.querySelector('#left-eye-lid');
+    const rightEye = svg.querySelector('#right-eye-lid');
+  }, 3000);
+}
+
+mouseIdle();
+
+// ── Responsive scaling ───────────────────────────────────────────────────────
+function scaleScene() {
+  const scene   = document.getElementById('scene');
+  const wrapper = document.getElementById('scene-wrapper');
+  const padding = 16;
+  const maxW = window.innerWidth  - padding * 2;
+  const maxH = window.innerHeight - 100; // leave room for download button
+  const scale = Math.min(maxW / 900, maxH / 600, 1);
+  scene.style.transform = `scale(${scale})`;
+  wrapper.style.height  = Math.round(600 * scale) + 'px';
+}
+
+scaleScene();
+window.addEventListener('resize', scaleScene);
+</script>
+</body>
+</html>
