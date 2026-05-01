@@ -956,45 +956,6 @@ function setGesture(type) {
   ra.style.transform = t.r;
 }
 
-// ── Background music ──────────────────────────────────────────────────────────
-let audioCtx = null;
-let musicStarted = false;
-
-function startMusic() {
-  if (musicStarted) return;
-  musicStarted = true;
-  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
-  const master = audioCtx.createGain();
-  master.gain.value = 0.06;
-  master.connect(audioCtx.destination);
-
-  // C major melody, mouse octave (C5–C6)
-  const FREQS = [523.25, 587.33, 659.25, 783.99, 880.00, 1046.50];
-  const MELODY = [0,2,4,2,0,5,4,2,0,2,4,5,4,2,0,1];
-  const DUR = 0.20, GAP = 0.05;
-
-  function scheduleMelody(t0) {
-    MELODY.forEach((ni, i) => {
-      const t   = t0 + i * (DUR + GAP);
-      const osc = audioCtx.createOscillator();
-      const env = audioCtx.createGain();
-      osc.type = 'triangle';
-      osc.frequency.value = FREQS[ni];
-      env.gain.setValueAtTime(0, t);
-      env.gain.linearRampToValueAtTime(1, t + 0.02);
-      env.gain.exponentialRampToValueAtTime(0.001, t + DUR);
-      osc.connect(env); env.connect(master);
-      osc.start(t); osc.stop(t + DUR + 0.01);
-    });
-    const loopLen = MELODY.length * (DUR + GAP);
-    setTimeout(() => {
-      if (audioCtx && audioCtx.state !== 'closed')
-        scheduleMelody(audioCtx.currentTime + 0.05);
-    }, (loopLen - 0.4) * 1000);
-  }
-  scheduleMelody(audioCtx.currentTime + 0.1);
-}
 
 function spawnConfetti() {
   const container = document.getElementById('confetti-container');
@@ -1021,13 +982,13 @@ function spawnConfetti() {
 
 function getVoice() {
   const voices = speechSynth.getVoices();
-  return voices.find(v =>
-    v.name.toLowerCase().includes('samantha') ||
-    v.name.toLowerCase().includes('karen') ||
-    v.name.toLowerCase().includes('moira') ||
-    v.name.toLowerCase().includes('female') ||
-    (v.lang.startsWith('en') && v.name.toLowerCase().includes('google'))
-  ) || voices.find(v => v.lang.startsWith('en')) || voices[0];
+  // Prefer child/young-sounding voices, then small/light female voices
+  return voices.find(v => /junior|rocko|sandy|shelley|child|kid/i.test(v.name))
+    || voices.find(v => /\ben[-_]US\b/i.test(v.lang) && /zira|nicky|tessa|flo/i.test(v.name))
+    || voices.find(v => /samantha|karen|moira|alice|amelie/i.test(v.name))
+    || voices.find(v => v.lang.startsWith('en') && v.name.toLowerCase().includes('google'))
+    || voices.find(v => v.lang.startsWith('en'))
+    || voices[0];
 }
 
 function speakText(text) {
@@ -1046,8 +1007,9 @@ function speakText(text) {
         return;
       }
       const utt = new SpeechSynthesisUtterance(phrases[i]);
-      utt.rate = 0.9;
-      utt.pitch = 2.0;
+      // Kid voice: slow + high pitch with slight natural variation per phrase
+      utt.rate  = 0.78 + Math.random() * 0.12; // 0.78–0.90, uneven like a real kid
+      utt.pitch = 1.9 + Math.random() * 0.1;   // near-max, slightly varied
       utt.volume = 1;
       if (voice) utt.voice = voice;
 
@@ -1144,10 +1106,7 @@ function startShow() {
   silentUtt.volume = 0;
   speechSynth.speak(silentUtt);
 
-  // Start background music (also unlocks AudioContext inside user gesture)
-  startMusic();
-
-  document.getElementById('speech-bubble').style.opacity = '1';
+document.getElementById('speech-bubble').style.opacity = '1';
   document.getElementById('title').style.opacity = '1';
   document.getElementById('progress').style.opacity = '1';
   document.getElementById('name-tag').style.opacity = '1';
