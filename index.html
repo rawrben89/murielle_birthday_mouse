@@ -359,6 +359,50 @@
     transform-origin: top center;
     transition: transform 0.4s ease;
   }
+
+  /* Skyline gentle parallax drift */
+  @keyframes skylineDrift {
+    0%, 100% { transform: translateX(0px); }
+    50%       { transform: translateX(-18px); }
+  }
+  #skyline { animation: skylineDrift 28s ease-in-out infinite; }
+
+  /* Mouse body rock while talking */
+  @keyframes talkRock {
+    0%, 100% { transform: rotate(-2.5deg); }
+    50%       { transform: rotate(2.5deg); }
+  }
+  #mouse-svg.talking {
+    animation: talkRock 0.28s ease-in-out infinite !important;
+  }
+
+  /* Mouse bounce on excited segments */
+  @keyframes mouseBounce {
+    0%, 100% { bottom: 175px; }
+    50%       { bottom: 192px; }
+  }
+  #mouse-container.bouncing {
+    animation: mouseBounce 0.42s ease-in-out infinite !important;
+    transition: none !important;
+  }
+
+  /* Speech bubble pop-in */
+  @keyframes bubblePop {
+    0%   { transform: translateX(-50%) scale(0.75); opacity: 0; }
+    65%  { transform: translateX(-50%) scale(1.04); opacity: 1; }
+    100% { transform: translateX(-50%) scale(1);    opacity: 1; }
+  }
+  #speech-bubble.pop { animation: bubblePop 0.35s cubic-bezier(.3,1.4,.5,1) forwards; }
+
+  /* Spotlight overlay */
+  #spotlight {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 4;
+    transition: background 1.2s ease;
+    background: radial-gradient(circle at 50% 78%, transparent 110px, rgba(0,0,0,0.42) 360px);
+  }
 </style>
 </head>
 <body>
@@ -367,6 +411,8 @@
 <div id="scene">
   <!-- Sky -->
   <div id="sky"></div>
+  <!-- Spotlight overlay -->
+  <div id="spotlight"></div>
 
   <!-- Moon -->
   <div id="moon"></div>
@@ -843,16 +889,31 @@ function setMouthLevel(openPx) {
 }
 
 function setTalking(on) {
+  const svg = document.getElementById('mouse-svg');
   if (on) {
     if (talkingInterval) return;
+    svg.classList.add('talking');
     talkingInterval = setInterval(() => {
       setMouthLevel(MOUTH_LEVELS[Math.floor(Math.random() * MOUTH_LEVELS.length)]);
     }, 140);
   } else {
+    svg.classList.remove('talking');
     clearInterval(talkingInterval);
     talkingInterval = null;
     setMouthLevel(0);
   }
+}
+
+function setSpotlight(type) {
+  const sp = document.getElementById('spotlight');
+  const gradients = {
+    excited: 'radial-gradient(circle at 50% 72%, transparent 140px, rgba(0,0,0,0.25) 380px)',
+    sad:     'radial-gradient(circle at 50% 78%, transparent  80px, rgba(0,0,0,0.65) 320px)',
+    guilty:  'radial-gradient(circle at 50% 78%, transparent  90px, rgba(0,0,0,0.55) 330px)',
+    happy:   'radial-gradient(circle at 50% 75%, transparent 130px, rgba(0,0,0,0.35) 370px)',
+    neutral: 'radial-gradient(circle at 50% 78%, transparent 110px, rgba(0,0,0,0.42) 360px)',
+  };
+  sp.style.background = gradients[type] || gradients.neutral;
 }
 
 // ── Expressions ───────────────────────────────────────────────────────────────
@@ -985,8 +1046,8 @@ function speakText(text) {
         return;
       }
       const utt = new SpeechSynthesisUtterance(phrases[i]);
-      utt.rate = 1.05;
-      utt.pitch = 1.6;
+      utt.rate = 0.9;
+      utt.pitch = 2.0;
       utt.volume = 1;
       if (voice) utt.voice = voice;
 
@@ -1012,6 +1073,8 @@ async function showSegment(index) {
     setTalking(false);
     setExpression('neutral');
     setGesture('normal');
+    setSpotlight('neutral');
+    document.getElementById('mouse-container').classList.remove('bouncing');
     document.getElementById('speech-bubble').style.opacity = '0';
     return;
   }
@@ -1023,11 +1086,20 @@ async function showSegment(index) {
     d.className = 'dot' + (i === index ? ' active' : '');
   });
 
-  // Expression, gesture, zoom
-  setExpression(seg.expression || 'neutral');
+  // Expression, gesture, spotlight, zoom
+  const expr = seg.expression || 'neutral';
+  setExpression(expr);
   setGesture(seg.gesture || 'normal');
-  document.getElementById('mouse-container').style.transform =
-    `translateX(-50%) scale(${seg.zoom || 1})`;
+  setSpotlight(expr);
+
+  // Bounce on excited segments
+  const mc = document.getElementById('mouse-container');
+  if (expr === 'excited') {
+    mc.classList.add('bouncing');
+  } else {
+    mc.classList.remove('bouncing');
+    mc.style.transform = `translateX(-50%) scale(${seg.zoom || 1})`;
+  }
 
   // Hat, knitting, confetti, cheese
   document.getElementById('birthday-hat-group').style.opacity = seg.showHat ? '1' : '0';
@@ -1039,16 +1111,19 @@ async function showSegment(index) {
     setTimeout(() => cheese.style.transform = '', 300);
   }
 
-  // Bubble
+  // Bubble pop-in
   const bubble = document.getElementById('speech-bubble');
   const textEl = document.getElementById('speech-text');
+  bubble.classList.remove('pop');
   bubble.style.opacity = '0';
 
   textEl.innerHTML = seg.text;
   const speechPromise = speakText(seg.text);
 
-  await sleep(50);
-  bubble.style.opacity = '1';
+  await sleep(40);
+  bubble.style.opacity = '';
+  void bubble.offsetWidth; // force reflow
+  bubble.classList.add('pop');
 
   await speechPromise;
   await sleep(800);
