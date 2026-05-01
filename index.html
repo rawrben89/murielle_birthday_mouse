@@ -135,15 +135,22 @@
     position: absolute;
     bottom: 175px;
     left: 50%;
-    transform: translateX(-50%);
+    transform: translateX(-50%) scale(1);
     width: 200px;
-    animation: mouseIdle 4s ease-in-out infinite;
     transform-origin: bottom center;
+    transition: transform 0.8s ease;
   }
 
   @keyframes mouseIdle {
-    0%, 100% { transform: translateX(-50%) rotate(-1deg); }
-    50% { transform: translateX(-50%) rotate(1deg); }
+    0%, 100% { transform: rotate(-1deg); }
+    50% { transform: rotate(1deg); }
+  }
+
+  #mouse-svg {
+    animation: mouseIdle 4s ease-in-out infinite;
+    transform-box: fill-box;
+    transform-origin: bottom center;
+    display: block;
   }
 
   /* Speech bubble */
@@ -304,13 +311,6 @@
     100% { transform: translateY(200px) rotate(720deg); opacity: 0; }
   }
 
-  /* Mouth animation */
-  @keyframes talk {
-    0%, 100% { d: path("M 85 92 Q 100 98 115 92"); }
-    50% { d: path("M 85 94 Q 100 106 115 94"); }
-  }
-
-
   /* Blink */
   @keyframes blink {
     0%, 90%, 100% { transform: scaleY(1); }
@@ -337,6 +337,27 @@
   @keyframes earPulse {
     0%, 100% { transform: scale(1); }
     50% { transform: scale(1.08); }
+  }
+
+  /* Mouth parts */
+  #mouth-teeth { opacity: 0; transition: opacity 0.08s; }
+  #mouth-tongue { opacity: 0; transition: opacity 0.08s; }
+
+  /* Eyebrows */
+  #left-brow, #right-brow {
+    transform-box: fill-box;
+    transform-origin: center;
+    transition: d 0.25s ease;
+  }
+
+  /* Tear */
+  #tear { opacity: 0; transition: opacity 0.5s; }
+
+  /* Arm groups */
+  #left-arm, #right-arm {
+    transform-box: fill-box;
+    transform-origin: top center;
+    transition: transform 0.4s ease;
   }
 </style>
 </head>
@@ -534,16 +555,20 @@
       <circle cx="127" cy="274" r="6" fill="#7a6262"/>
       <circle cx="138" cy="275" r="6" fill="#7a6262"/>
 
-      <!-- Little arms/paws -->
-      <ellipse cx="48"  cy="190" rx="14" ry="10" fill="#9a8282" transform="rotate(-30 48 190)"/>
-      <ellipse cx="152" cy="190" rx="14" ry="10" fill="#9a8282" transform="rotate(30 152 190)"/>
-      <!-- Paw details -->
-      <circle cx="38"  cy="188" r="5" fill="#8a7070"/>
-      <circle cx="46"  cy="182" r="5" fill="#8a7070"/>
-      <circle cx="55"  cy="182" r="5" fill="#8a7070"/>
-      <circle cx="145" cy="182" r="5" fill="#8a7070"/>
-      <circle cx="154" cy="182" r="5" fill="#8a7070"/>
-      <circle cx="162" cy="188" r="5" fill="#8a7070"/>
+      <!-- Left arm/paw -->
+      <g id="left-arm">
+        <ellipse cx="48"  cy="190" rx="14" ry="10" fill="#9a8282" transform="rotate(-30 48 190)"/>
+        <circle cx="38"  cy="188" r="5" fill="#8a7070"/>
+        <circle cx="46"  cy="182" r="5" fill="#8a7070"/>
+        <circle cx="55"  cy="182" r="5" fill="#8a7070"/>
+      </g>
+      <!-- Right arm/paw -->
+      <g id="right-arm">
+        <ellipse cx="152" cy="190" rx="14" ry="10" fill="#9a8282" transform="rotate(30 152 190)"/>
+        <circle cx="145" cy="182" r="5" fill="#8a7070"/>
+        <circle cx="154" cy="182" r="5" fill="#8a7070"/>
+        <circle cx="162" cy="188" r="5" fill="#8a7070"/>
+      </g>
 
       <!-- Belly -->
       <ellipse cx="100" cy="220" rx="30" ry="40" fill="#d4c0b0" opacity="0.6"/>
@@ -618,9 +643,24 @@
       <line x1="100" y1="122" x2="160" y2="122" stroke="#6a5a5a" stroke-width="1.5" stroke-linecap="round" opacity="0.7"/>
       <line x1="100" y1="124" x2="160" y2="132" stroke="#6a5a5a" stroke-width="1.5" stroke-linecap="round" opacity="0.7"/>
 
-      <!-- Mouth - animated when talking -->
-      <path id="mouse-mouth" d="M 85 132 Q 100 138 115 132"
-            fill="none" stroke="#5a3a3a" stroke-width="3" stroke-linecap="round"/>
+      <!-- Eyebrows -->
+      <path id="left-brow"  d="M 70 82 Q 80 78 90 82" fill="none" stroke="#5a3a3a" stroke-width="3" stroke-linecap="round"/>
+      <path id="right-brow" d="M 110 82 Q 120 78 130 82" fill="none" stroke="#5a3a3a" stroke-width="3" stroke-linecap="round"/>
+
+      <!-- Tear -->
+      <ellipse id="tear" cx="128" cy="112" rx="4" ry="7" fill="#88ccff" opacity="0"/>
+
+      <!-- Mouth group -->
+      <g id="mouse-mouth">
+        <path id="mouth-bg" d="M 85 132 Q 100 136 115 132 Q 100 132 85 132 Z" fill="#3a1515"/>
+        <g id="mouth-teeth">
+          <rect x="90" y="132" width="8" height="5" rx="1.5" fill="white"/>
+          <rect x="101" y="132" width="8" height="5" rx="1.5" fill="white"/>
+        </g>
+        <ellipse id="mouth-tongue" cx="100" cy="143" rx="8" ry="5" fill="#e06060"/>
+        <path id="mouth-upper-lip" d="M 85 132 Q 100 136 115 132" fill="none" stroke="#5a3a3a" stroke-width="3" stroke-linecap="round"/>
+        <path id="mouth-lower-lip" d="M 85 132 Q 100 138 115 132" fill="none" stroke="#5a3a3a" stroke-width="2.5" stroke-linecap="round"/>
+      </g>
 
       <!-- Scarf -->
       <g class="scarf" transform-origin="100 155">
@@ -704,62 +744,60 @@ for (let i = 0; i < 120; i++) {
 const segments = [
   {
     text: "Hello Murielle... I am the mouse you're trying to catch.",
-    duration: 4500
+    expression: 'cheeky', gesture: 'wave', zoom: 1.0
   },
   {
     text: "You're living in <em>my</em> house. Thank you for always paying the rent — I really appreciate it.",
-    duration: 5000
+    expression: 'happy', gesture: 'point', zoom: 1.0
   },
   {
     text: "I have a big family. Like... <em>very</em> big.",
-    duration: 4000
+    expression: 'happy', gesture: 'shrug', zoom: 1.02
   },
   {
     text: "We snack a lot. You've noticed.",
-    duration: 3500,
-    cheeseBounce: true
+    cheeseBounce: true,
+    expression: 'guilty', gesture: 'shrug', zoom: 1.0
   },
   {
     text: "I heard you're turning 30...<br>So I wanted to wish you a <strong>happy birthday month!</strong>",
-    duration: 5000,
-    showHat: true,
-    confetti: true
+    showHat: true, confetti: true,
+    expression: 'excited', gesture: 'excited', zoom: 1.08
   },
   {
     text: "Filled with love, laughter... and <em>fewer</em> mouse traps.",
-    duration: 4500
+    expression: 'happy', gesture: 'wave', zoom: 1.0
   },
   {
     text: "I am so sad knowing that you are leaving Chicago soon...",
-    duration: 4500
+    expression: 'sad', gesture: 'normal', zoom: 0.97
   },
   {
     text: "It's been great having you as a tenant — you and your husband <strong>André</strong>.",
-    duration: 4500
+    expression: 'happy', gesture: 'wave', zoom: 1.0
   },
   {
     text: "Also... I see you knit so well.<br>Can I ask you for a favor?",
-    duration: 4500,
-    showKnitting: true
+    showKnitting: true,
+    expression: 'surprised', gesture: 'knit', zoom: 1.0
   },
   {
     text: "Can you make scarves for my <strong>50 cousins</strong>?<br>It would really be appreciated...",
-    duration: 5000
+    expression: 'surprised', gesture: 'shrug', zoom: 1.03
   },
   {
     text: "Especially since... you eliminated a few of them.",
-    duration: 4000
+    expression: 'guilty', gesture: 'cover_face', zoom: 1.0
   },
   {
     text: "But it's okay! We forgive! We grow!",
-    duration: 4000,
-    confetti: true
+    confetti: true,
+    expression: 'excited', gesture: 'excited', zoom: 1.08
   },
   {
     text: "Anyways...<br><strong>Love,<br>The Chicago Mice</strong>",
-    duration: 6000,
-    showHat: true,
-    confetti: true
+    showHat: true, confetti: true,
+    expression: 'happy', gesture: 'wave', zoom: 1.05
   }
 ];
 
@@ -778,24 +816,123 @@ let speechSynth = window.speechSynthesis;
 let currentUtterance = null;
 let talkingInterval = null;
 
-const MOUTH_CLOSED = 'M 85 132 Q 100 138 115 132';
-const MOUTH_OPEN   = 'M 85 134 Q 100 152 115 134';
-let mouthOpen = false;
+const MOUTH_LEVELS = [0, 3, 6, 10, 13];
+
+function setMouthLevel(openPx) {
+  const topY  = 132;
+  const botY  = topY + openPx;
+  const midY  = topY + 4;
+
+  const bg    = document.getElementById('mouth-bg');
+  const upper = document.getElementById('mouth-upper-lip');
+  const lower = document.getElementById('mouth-lower-lip');
+  const teeth = document.getElementById('mouth-teeth');
+  const tongue= document.getElementById('mouth-tongue');
+
+  bg.setAttribute('d', `M 85 ${topY} Q 100 ${midY} 115 ${topY} Q 100 ${botY + 2} 85 ${topY} Z`);
+  upper.setAttribute('d', `M 85 ${topY} Q 100 ${midY} 115 ${topY}`);
+  lower.setAttribute('d', `M 85 ${topY} Q 100 ${botY + 2} 115 ${topY}`);
+
+  teeth.style.opacity = openPx > 3 ? '1' : '0';
+  if (openPx > 3) {
+    teeth.querySelectorAll('rect').forEach(r => r.setAttribute('y', String(topY)));
+  }
+
+  tongue.style.opacity = openPx > 9 ? '1' : '0';
+  if (openPx > 9) tongue.setAttribute('cy', String(topY + openPx - 2));
+}
 
 function setTalking(on) {
-  const mouth = document.getElementById('mouse-mouth');
   if (on) {
     if (talkingInterval) return;
     talkingInterval = setInterval(() => {
-      mouthOpen = !mouthOpen;
-      mouth.setAttribute('d', mouthOpen ? MOUTH_OPEN : MOUTH_CLOSED);
-    }, 160);
+      setMouthLevel(MOUTH_LEVELS[Math.floor(Math.random() * MOUTH_LEVELS.length)]);
+    }, 140);
   } else {
     clearInterval(talkingInterval);
     talkingInterval = null;
-    mouthOpen = false;
-    mouth.setAttribute('d', MOUTH_CLOSED);
+    setMouthLevel(0);
   }
+}
+
+// ── Expressions ───────────────────────────────────────────────────────────────
+function setExpression(type) {
+  const lb   = document.getElementById('left-brow');
+  const rb   = document.getElementById('right-brow');
+  const tear = document.getElementById('tear');
+  tear.style.opacity = '0';
+
+  const B = {
+    neutral:   { l: 'M 70 82 Q 80 78 90 82',  r: 'M 110 82 Q 120 78 130 82' },
+    happy:     { l: 'M 70 78 Q 80 74 90 78',  r: 'M 110 78 Q 120 74 130 78' },
+    sad:       { l: 'M 70 80 Q 80 76 90 83',  r: 'M 110 83 Q 120 76 130 80' },
+    surprised: { l: 'M 68 74 Q 80 70 92 74',  r: 'M 108 74 Q 120 70 132 74' },
+    guilty:    { l: 'M 70 84 Q 80 80 90 80',  r: 'M 110 80 Q 120 80 130 84' },
+    excited:   { l: 'M 68 74 Q 80 70 92 74',  r: 'M 108 74 Q 120 70 132 74' },
+    cheeky:    { l: 'M 70 80 Q 80 76 90 82',  r: 'M 110 79 Q 120 75 130 81' },
+  };
+  const b = B[type] || B.neutral;
+  lb.setAttribute('d', b.l);
+  rb.setAttribute('d', b.r);
+  if (type === 'sad') tear.style.opacity = '0.9';
+}
+
+// ── Gestures ──────────────────────────────────────────────────────────────────
+function setGesture(type) {
+  const la = document.getElementById('left-arm');
+  const ra = document.getElementById('right-arm');
+  const transforms = {
+    normal:     { l: 'none',                                        r: 'none' },
+    wave:       { l: 'none',                                        r: 'rotate(-40deg) translateY(-18px)' },
+    shrug:      { l: 'rotate(25deg) translateY(-10px)',             r: 'rotate(-25deg) translateY(-10px)' },
+    excited:    { l: 'rotate(50deg) translateY(-28px)',             r: 'rotate(-50deg) translateY(-28px)' },
+    cover_face: { l: 'rotate(70deg) translateY(-40px) translateX(15px)', r: 'rotate(-70deg) translateY(-40px) translateX(-15px)' },
+    knit:       { l: 'rotate(-15deg) translateY(-5px)',             r: 'rotate(15deg) translateY(-5px)' },
+    point:      { l: 'none',                                        r: 'rotate(-55deg) translateY(-20px)' },
+  };
+  const t = transforms[type] || transforms.normal;
+  la.style.transform = t.l;
+  ra.style.transform = t.r;
+}
+
+// ── Background music ──────────────────────────────────────────────────────────
+let audioCtx = null;
+let musicStarted = false;
+
+function startMusic() {
+  if (musicStarted) return;
+  musicStarted = true;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+  const master = audioCtx.createGain();
+  master.gain.value = 0.06;
+  master.connect(audioCtx.destination);
+
+  // C major melody, mouse octave (C5–C6)
+  const FREQS = [523.25, 587.33, 659.25, 783.99, 880.00, 1046.50];
+  const MELODY = [0,2,4,2,0,5,4,2,0,2,4,5,4,2,0,1];
+  const DUR = 0.20, GAP = 0.05;
+
+  function scheduleMelody(t0) {
+    MELODY.forEach((ni, i) => {
+      const t   = t0 + i * (DUR + GAP);
+      const osc = audioCtx.createOscillator();
+      const env = audioCtx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.value = FREQS[ni];
+      env.gain.setValueAtTime(0, t);
+      env.gain.linearRampToValueAtTime(1, t + 0.02);
+      env.gain.exponentialRampToValueAtTime(0.001, t + DUR);
+      osc.connect(env); env.connect(master);
+      osc.start(t); osc.stop(t + DUR + 0.01);
+    });
+    const loopLen = MELODY.length * (DUR + GAP);
+    setTimeout(() => {
+      if (audioCtx && audioCtx.state !== 'closed')
+        scheduleMelody(audioCtx.currentTime + 0.05);
+    }, (loopLen - 0.4) * 1000);
+  }
+  scheduleMelody(audioCtx.currentTime + 0.1);
 }
 
 function spawnConfetti() {
@@ -849,7 +986,7 @@ function speakText(text) {
       }
       const utt = new SpeechSynthesisUtterance(phrases[i]);
       utt.rate = 1.05;
-      utt.pitch = 1.3;
+      utt.pitch = 1.6;
       utt.volume = 1;
       if (voice) utt.voice = voice;
 
@@ -872,56 +1009,50 @@ function speakText(text) {
 
 async function showSegment(index) {
   if (index >= segments.length) {
-    // Finished
     setTalking(false);
+    setExpression('neutral');
+    setGesture('normal');
     document.getElementById('speech-bubble').style.opacity = '0';
     return;
   }
 
   const seg = segments[index];
 
-  // Update progress dots
+  // Progress dots
   document.querySelectorAll('.dot').forEach((d, i) => {
     d.className = 'dot' + (i === index ? ' active' : '');
   });
 
-  // Show hat?
+  // Expression, gesture, zoom
+  setExpression(seg.expression || 'neutral');
+  setGesture(seg.gesture || 'normal');
+  document.getElementById('mouse-container').style.transform =
+    `translateX(-50%) scale(${seg.zoom || 1})`;
+
+  // Hat, knitting, confetti, cheese
   document.getElementById('birthday-hat-group').style.opacity = seg.showHat ? '1' : '0';
-
-  // Show knitting?
-  const knitting = document.getElementById('knitting-group');
-  knitting.style.opacity = seg.showKnitting ? '1' : '0';
-
-  // Confetti?
+  document.getElementById('knitting-group').style.opacity = seg.showKnitting ? '1' : '0';
   if (seg.confetti) spawnConfetti();
-
-  // Cheese bounce?
   const cheese = document.getElementById('cheese');
   if (seg.cheeseBounce) {
-    cheese.style.animation = 'none';
     cheese.style.transform = 'translateY(-10px)';
     setTimeout(() => cheese.style.transform = '', 300);
   }
 
-  // Fade out bubble
+  // Bubble
   const bubble = document.getElementById('speech-bubble');
   const textEl = document.getElementById('speech-text');
   bubble.style.opacity = '0';
 
-  // Set text immediately and start speaking — no delay
   textEl.innerHTML = seg.text;
   const speechPromise = speakText(seg.text);
 
-  // Fade bubble in while speech is already starting
   await sleep(50);
   bubble.style.opacity = '1';
 
   await speechPromise;
-
-  // Short pause before advancing
   await sleep(800);
 
-  // Next segment
   if (isRunning) showSegment(index + 1);
 }
 
@@ -933,16 +1064,30 @@ function startShow() {
   const btn = document.getElementById('start-btn');
   btn.style.display = 'none';
 
+  // Mobile unlock — must be synchronous inside the tap handler
+  const silentUtt = new SpeechSynthesisUtterance('');
+  silentUtt.volume = 0;
+  speechSynth.speak(silentUtt);
+
+  // Start background music (also unlocks AudioContext inside user gesture)
+  startMusic();
+
   document.getElementById('speech-bubble').style.opacity = '1';
   document.getElementById('title').style.opacity = '1';
   document.getElementById('progress').style.opacity = '1';
   document.getElementById('name-tag').style.opacity = '1';
 
+  // Reset zoom
+  document.getElementById('mouse-container').style.transform = 'translateX(-50%) scale(1)';
+
   isRunning = true;
 
-  // Load voices
-  if (speechSynth.getVoices().length === 0) {
+  // Load voices (with timeout fallback for mobile browsers that never fire onvoiceschanged)
+  const voices = speechSynth.getVoices();
+  if (voices.length === 0) {
+    let voiceTimer = setTimeout(() => showSegment(0), 1000);
     speechSynth.onvoiceschanged = () => {
+      clearTimeout(voiceTimer);
       speechSynth.onvoiceschanged = null;
       showSegment(0);
     };
