@@ -138,7 +138,7 @@
     transform: translateX(-50%) scale(1);
     width: 200px;
     transform-origin: bottom center;
-    transition: transform 0.8s ease;
+    transition: left 0.85s cubic-bezier(.4,0,.2,1), transform 0.5s ease;
   }
 
   @keyframes mouseIdle {
@@ -405,19 +405,19 @@
   }
   #mouse-container.bouncing {
     animation: mouseBounce 0.38s ease-in-out infinite !important;
-    transition: none !important;
+    transition: left 0.85s cubic-bezier(.4,0,.2,1), transform 0.5s ease !important;
   }
 
   /* Jump — single big leap */
   @keyframes mouseJump {
     0%   { bottom: 175px; }
-    35%  { bottom: 230px; }
-    65%  { bottom: 230px; }
+    35%  { bottom: 240px; }
+    65%  { bottom: 240px; }
     100% { bottom: 175px; }
   }
   #mouse-container.jumping {
-    animation: mouseJump 0.6s cubic-bezier(.33,1,.68,1) forwards !important;
-    transition: none !important;
+    animation: mouseJump 0.65s cubic-bezier(.33,1,.68,1) forwards !important;
+    transition: left 0.85s cubic-bezier(.4,0,.2,1), transform 0.5s ease !important;
   }
 
   /* Speech bubble pop-in */
@@ -1081,13 +1081,11 @@ function spawnConfetti() {
 
 function getVoice() {
   const voices = speechSynth.getVoices();
-  // Prefer child/young-sounding voices, then small/light female voices
-  return voices.find(v => /junior|rocko|sandy|shelley|child|kid/i.test(v.name))
-    || voices.find(v => /\ben[-_]US\b/i.test(v.lang) && /zira|nicky|tessa|flo/i.test(v.name))
-    || voices.find(v => /samantha|karen|moira|alice|amelie/i.test(v.name))
-    || voices.find(v => v.lang.startsWith('en') && v.name.toLowerCase().includes('google'))
-    || voices.find(v => v.lang.startsWith('en'))
-    || voices[0];
+  return voices.find(v =>
+    /samantha|karen|moira/i.test(v.name) ||
+    v.name.toLowerCase().includes('female') ||
+    (v.lang.startsWith('en') && v.name.toLowerCase().includes('google'))
+  ) || voices.find(v => v.lang.startsWith('en')) || voices[0];
 }
 
 function speakText(text) {
@@ -1107,9 +1105,8 @@ function speakText(text) {
       }
       squeak();
       const utt = new SpeechSynthesisUtterance(phrases[i]);
-      // Kid voice: slow + high pitch with slight natural variation per phrase
-      utt.rate  = 0.78 + Math.random() * 0.12; // 0.78–0.90
-      utt.pitch = 1.9  + Math.random() * 0.1;  // 1.9–2.0
+      utt.rate  = 1.05;
+      utt.pitch = 1.3;
       utt.volume = 1;
       if (voice) utt.voice = voice;
 
@@ -1169,18 +1166,18 @@ async function showSegment(index) {
   mc.classList.remove('bouncing', 'jumping');
   svg.classList.remove('walking');
 
+  mc.style.left = `calc(50% + ${x}px)`;
+  mc.style.transform = `translateX(-50%) scale(${zoom})`;
+
   if (seg.move === 'jump') {
-    mc.style.transform = `translateX(calc(-50% + ${x}px)) scale(${zoom})`;
     mc.classList.add('jumping');
     setTimeout(() => mc.classList.remove('jumping'), 650);
     setTimeout(() => mc.classList.add('bouncing'), 660);
   } else if (seg.move === 'walk') {
     svg.classList.add('walking');
-    mc.style.transform = `translateX(calc(-50% + ${x}px)) scale(${zoom})`;
     setTimeout(() => { svg.classList.remove('walking'); setEyeDirection(0); }, 900);
     if (expr === 'excited') mc.classList.add('bouncing');
   } else {
-    mc.style.transform = `translateX(calc(-50% + ${x}px)) scale(${zoom})`;
     if (expr === 'excited') mc.classList.add('bouncing');
   }
 
@@ -1232,8 +1229,10 @@ document.getElementById('speech-bubble').style.opacity = '1';
   document.getElementById('progress').style.opacity = '1';
   document.getElementById('name-tag').style.opacity = '1';
 
-  // Reset zoom
-  document.getElementById('mouse-container').style.transform = 'translateX(-50%) scale(1)';
+  // Reset position and zoom
+  const mc0 = document.getElementById('mouse-container');
+  mc0.style.left = '50%';
+  mc0.style.transform = 'translateX(-50%) scale(1)';
 
   isRunning = true;
 
