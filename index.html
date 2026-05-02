@@ -195,8 +195,9 @@
   /* Name tag */
   #name-tag {
     position: absolute;
-    bottom: 300px;
-    left: calc(50% + 108px);
+    top: 284px;
+    left: 50%;
+    transform: translateX(-50%);
     background: rgba(255,200,0,0.9);
     color: #1a1a00;
     padding: 4px 12px;
@@ -207,16 +208,6 @@
     opacity: 0;
     transition: opacity 0.5s;
     white-space: nowrap;
-  }
-
-  #name-tag::before {
-    content: '';
-    position: absolute;
-    right: 100%;
-    top: 50%;
-    transform: translateY(-50%);
-    border: 6px solid transparent;
-    border-right-color: rgba(200,150,0,0.8);
   }
 
   /* Start button */
@@ -430,12 +421,7 @@
 
   /* Spotlight overlay */
   #spotlight {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    z-index: 4;
-    transition: background 1.2s ease;
-    background: radial-gradient(circle at 50% 78%, transparent 110px, rgba(0,0,0,0.42) 360px);
+    display: none;
   }
 </style>
 </head>
@@ -773,10 +759,9 @@
         <path d="M 55 175 Q 65 172 75 175 Q 75 180 65 182 Q 55 180 55 175Z" fill="#cc3366" opacity="0.7"/>
       </g>
     </svg>
+    <!-- Name tag follows mouse -->
+    <div id="name-tag">Chicago Mouse</div>
   </div>
-
-  <!-- Name tag -->
-  <div id="name-tag">Chicago Mouse</div>
 
   <!-- Speech bubble -->
   <div id="speech-bubble">
