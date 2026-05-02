@@ -1108,8 +1108,8 @@ function speakText(text) {
       squeak();
       const utt = new SpeechSynthesisUtterance(phrases[i]);
       // Kid voice: slow + high pitch with slight natural variation per phrase
-      utt.rate  = 0.82 + Math.random() * 0.1;  // 0.82–0.92, slow and natural
-      utt.pitch = 1.25 + Math.random() * 0.1; // slightly high, not chipmunk
+      utt.rate  = 0.78 + Math.random() * 0.12; // 0.78–0.90
+      utt.pitch = 1.9  + Math.random() * 0.1;  // 1.9–2.0
       utt.volume = 1;
       if (voice) utt.voice = voice;
 
