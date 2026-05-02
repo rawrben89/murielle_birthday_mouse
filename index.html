@@ -376,13 +376,35 @@
     animation: talkRock 0.28s ease-in-out infinite !important;
   }
 
+  /* Walking bob — plays while mouse travels to new x position */
+  @keyframes walkBob {
+    0%, 100% { transform: rotate(-4deg) translateY(0px);  }
+    25%       { transform: rotate(-6deg) translateY(-8px); }
+    75%       { transform: rotate(6deg)  translateY(-8px); }
+  }
+  #mouse-svg.walking {
+    animation: walkBob 0.35s ease-in-out infinite !important;
+  }
+
   /* Mouse bounce on excited segments */
   @keyframes mouseBounce {
     0%, 100% { bottom: 175px; }
-    50%       { bottom: 192px; }
+    50%       { bottom: 200px; }
   }
   #mouse-container.bouncing {
-    animation: mouseBounce 0.42s ease-in-out infinite !important;
+    animation: mouseBounce 0.38s ease-in-out infinite !important;
+    transition: none !important;
+  }
+
+  /* Jump — single big leap */
+  @keyframes mouseJump {
+    0%   { bottom: 175px; }
+    35%  { bottom: 230px; }
+    65%  { bottom: 230px; }
+    100% { bottom: 175px; }
+  }
+  #mouse-container.jumping {
+    animation: mouseJump 0.6s cubic-bezier(.33,1,.68,1) forwards !important;
     transition: none !important;
   }
 
@@ -790,60 +812,60 @@ for (let i = 0; i < 120; i++) {
 const segments = [
   {
     text: "Hello Murielle... I am the mouse you're trying to catch.",
-    expression: 'cheeky', gesture: 'wave', zoom: 1.0
+    expression: 'cheeky', gesture: 'wave', zoom: 1.0, x: -60, move: 'walk'
   },
   {
     text: "You're living in <em>my</em> house. Thank you for always paying the rent — I really appreciate it.",
-    expression: 'happy', gesture: 'point', zoom: 1.0
+    expression: 'happy', gesture: 'point', zoom: 1.0, x: 70, move: 'walk'
   },
   {
     text: "I have a big family. Like... <em>very</em> big.",
-    expression: 'happy', gesture: 'shrug', zoom: 1.02
+    expression: 'happy', gesture: 'shrug', zoom: 1.02, x: -30, move: 'walk'
   },
   {
     text: "We snack a lot. You've noticed.",
     cheeseBounce: true,
-    expression: 'guilty', gesture: 'shrug', zoom: 1.0
+    expression: 'guilty', gesture: 'shrug', zoom: 1.0, x: 90, move: 'walk'
   },
   {
     text: "I heard you're turning 30...<br>So I wanted to wish you a <strong>happy birthday month!</strong>",
     showHat: true, confetti: true,
-    expression: 'excited', gesture: 'excited', zoom: 1.08
+    expression: 'excited', gesture: 'excited', zoom: 1.08, x: 0, move: 'jump'
   },
   {
     text: "Filled with love, laughter... and <em>fewer</em> mouse traps.",
-    expression: 'happy', gesture: 'wave', zoom: 1.0
+    expression: 'happy', gesture: 'wave', zoom: 1.0, x: -80, move: 'walk'
   },
   {
     text: "I am so sad knowing that you are leaving Chicago soon...",
-    expression: 'sad', gesture: 'normal', zoom: 0.97
+    expression: 'sad', gesture: 'normal', zoom: 0.97, x: 0, move: 'walk'
   },
   {
     text: "It's been great having you as a tenant — you and your husband <strong>André</strong>.",
-    expression: 'happy', gesture: 'wave', zoom: 1.0
+    expression: 'happy', gesture: 'wave', zoom: 1.0, x: 60, move: 'walk'
   },
   {
     text: "Also... I see you knit so well.<br>Can I ask you for a favor?",
     showKnitting: true,
-    expression: 'surprised', gesture: 'knit', zoom: 1.0
+    expression: 'surprised', gesture: 'knit', zoom: 1.0, x: -50, move: 'walk'
   },
   {
     text: "Can you make scarves for my <strong>50 cousins</strong>?<br>It would really be appreciated...",
-    expression: 'surprised', gesture: 'shrug', zoom: 1.03
+    expression: 'surprised', gesture: 'shrug', zoom: 1.03, x: 40, move: 'walk'
   },
   {
     text: "Especially since... you eliminated a few of them.",
-    expression: 'guilty', gesture: 'cover_face', zoom: 1.0
+    expression: 'guilty', gesture: 'cover_face', zoom: 1.0, x: -70, move: 'walk'
   },
   {
     text: "But it's okay! We forgive! We grow!",
     confetti: true,
-    expression: 'excited', gesture: 'excited', zoom: 1.08
+    expression: 'excited', gesture: 'excited', zoom: 1.08, x: 0, move: 'jump'
   },
   {
     text: "Anyways...<br><strong>Love,<br>The Chicago Mice</strong>",
     showHat: true, confetti: true,
-    expression: 'happy', gesture: 'wave', zoom: 1.05
+    expression: 'happy', gesture: 'wave', zoom: 1.05, x: 0, move: 'walk'
   }
 ];
 
@@ -1008,8 +1030,8 @@ function speakText(text) {
       }
       const utt = new SpeechSynthesisUtterance(phrases[i]);
       // Kid voice: slow + high pitch with slight natural variation per phrase
-      utt.rate  = 0.78 + Math.random() * 0.12; // 0.78–0.90, uneven like a real kid
-      utt.pitch = 1.9 + Math.random() * 0.1;   // near-max, slightly varied
+      utt.rate  = 0.82 + Math.random() * 0.1;  // 0.82–0.92, slow and natural
+      utt.pitch = 1.25 + Math.random() * 0.1; // slightly high, not chipmunk
       utt.volume = 1;
       if (voice) utt.voice = voice;
 
@@ -1048,19 +1070,35 @@ async function showSegment(index) {
     d.className = 'dot' + (i === index ? ' active' : '');
   });
 
-  // Expression, gesture, spotlight, zoom
+  // Expression, gesture, spotlight
   const expr = seg.expression || 'neutral';
   setExpression(expr);
   setGesture(seg.gesture || 'normal');
   setSpotlight(expr);
 
-  // Bounce on excited segments
-  const mc = document.getElementById('mouse-container');
-  if (expr === 'excited') {
-    mc.classList.add('bouncing');
+  // Movement
+  const mc  = document.getElementById('mouse-container');
+  const svg = document.getElementById('mouse-svg');
+  const x   = seg.x || 0;
+  const zoom = seg.zoom || 1;
+
+  mc.classList.remove('bouncing', 'jumping');
+  svg.classList.remove('walking');
+
+  if (seg.move === 'jump') {
+    mc.style.transform = `translateX(calc(-50% + ${x}px)) scale(${zoom})`;
+    mc.classList.add('jumping');
+    setTimeout(() => mc.classList.remove('jumping'), 650);
+    setTimeout(() => mc.classList.add('bouncing'), 660);
+  } else if (seg.move === 'walk') {
+    // Flash the walking animation for the duration of the CSS transition
+    svg.classList.add('walking');
+    mc.style.transform = `translateX(calc(-50% + ${x}px)) scale(${zoom})`;
+    setTimeout(() => svg.classList.remove('walking'), 850);
+    if (expr === 'excited') mc.classList.add('bouncing');
   } else {
-    mc.classList.remove('bouncing');
-    mc.style.transform = `translateX(-50%) scale(${seg.zoom || 1})`;
+    mc.style.transform = `translateX(calc(-50% + ${x}px)) scale(${zoom})`;
+    if (expr === 'excited') mc.classList.add('bouncing');
   }
 
   // Hat, knitting, confetti, cheese
