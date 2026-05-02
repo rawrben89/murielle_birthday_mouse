@@ -323,20 +323,32 @@
     transform-box: fill-box;
   }
 
-  /* Tail wag */
+  /* Tail wag — speed controlled via CSS variable */
   @keyframes tailWag {
     0%, 100% { d: path("M 155 230 Q 200 250 240 220 Q 280 190 300 210"); }
-    50% { d: path("M 155 230 Q 200 260 250 240 Q 290 215 310 230"); }
+    50%       { d: path("M 155 230 Q 200 260 250 240 Q 290 215 310 230"); }
+  }
+  #mouse-tail { animation: tailWag var(--tail-dur, 2s) ease-in-out infinite; }
+
+  /* Ear wiggle */
+  @keyframes earWiggle {
+    0%, 100% { transform: rotate(0deg) scale(1); }
+    25%       { transform: rotate(-8deg) scale(1.1); }
+    75%       { transform: rotate(8deg)  scale(1.1); }
+  }
+  #left-ear.wiggling, #right-ear.wiggling {
+    animation: earWiggle 0.3s ease-in-out 3 !important;
+    transform-box: fill-box;
+    transform-origin: bottom center;
   }
 
-  #mouse-tail {
-    animation: tailWag 2s ease-in-out infinite;
-  }
+  /* Eye look direction */
+  #left-iris, #right-iris { transition: transform 0.3s ease; }
 
   /* Ear pulse when happy */
   @keyframes earPulse {
     0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.08); }
+    50%       { transform: scale(1.08); }
   }
 
   /* Mouth parts */
@@ -662,12 +674,16 @@
       <circle cx="100" cy="105" r="52" fill="url(#headGrad)"/>
 
       <!-- Left ear -->
-      <circle cx="58" cy="65" r="28" fill="url(#earGrad)"/>
-      <circle cx="58" cy="65" r="17" fill="url(#innerEarGrad)"/>
+      <g id="left-ear">
+        <circle cx="58" cy="65" r="28" fill="url(#earGrad)"/>
+        <circle cx="58" cy="65" r="17" fill="url(#innerEarGrad)"/>
+      </g>
 
       <!-- Right ear -->
-      <circle cx="142" cy="65" r="28" fill="url(#earGrad)"/>
-      <circle cx="142" cy="65" r="17" fill="url(#innerEarGrad)"/>
+      <g id="right-ear">
+        <circle cx="142" cy="65" r="28" fill="url(#earGrad)"/>
+        <circle cx="142" cy="65" r="17" fill="url(#innerEarGrad)"/>
+      </g>
 
       <!-- Head again (on top of ear overlap) -->
       <circle cx="100" cy="107" r="50" fill="url(#headGrad)"/>
@@ -679,21 +695,23 @@
       <!-- Eyes -->
       <!-- Left eye white -->
       <circle cx="80" cy="95" r="14" fill="white"/>
-      <!-- Left iris -->
-      <circle cx="82" cy="96" r="10" fill="#2a1a1a"/>
-      <!-- Left pupil shine -->
-      <circle cx="85" cy="92" r="4" fill="white"/>
-      <circle cx="88" cy="94" r="2" fill="white" opacity="0.6"/>
+      <!-- Left iris group (moves for eye tracking) -->
+      <g id="left-iris">
+        <circle cx="82" cy="96" r="10" fill="#2a1a1a"/>
+        <circle cx="85" cy="92" r="4"  fill="white"/>
+        <circle cx="88" cy="94" r="2"  fill="white" opacity="0.6"/>
+      </g>
       <!-- Left eyelid (for blinking) -->
       <ellipse id="left-eye-lid" cx="80" cy="95" rx="14" ry="14" fill="url(#headGrad)" opacity="0"/>
 
       <!-- Right eye white -->
       <circle cx="120" cy="95" r="14" fill="white"/>
-      <!-- Right iris -->
-      <circle cx="118" cy="96" r="10" fill="#2a1a1a"/>
-      <!-- Right pupil shine -->
-      <circle cx="115" cy="92" r="4" fill="white"/>
-      <circle cx="112" cy="94" r="2" fill="white" opacity="0.6"/>
+      <!-- Right iris group (moves for eye tracking) -->
+      <g id="right-iris">
+        <circle cx="118" cy="96" r="10" fill="#2a1a1a"/>
+        <circle cx="115" cy="92" r="4"  fill="white"/>
+        <circle cx="112" cy="94" r="2"  fill="white" opacity="0.6"/>
+      </g>
       <!-- Right eyelid (for blinking) -->
       <ellipse id="right-eye-lid" cx="120" cy="95" rx="14" ry="14" fill="url(#headGrad)" opacity="0"/>
 
@@ -938,6 +956,65 @@ function setSpotlight(type) {
   sp.style.background = gradients[type] || gradients.neutral;
 }
 
+// ── Squeak SFX ────────────────────────────────────────────────────────────────
+let sfxCtx = null;
+function squeak() {
+  try {
+    if (!sfxCtx) sfxCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = sfxCtx.createOscillator();
+    const env = sfxCtx.createGain();
+    osc.connect(env); env.connect(sfxCtx.destination);
+    const t = sfxCtx.currentTime;
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(900, t);
+    osc.frequency.exponentialRampToValueAtTime(1400, t + 0.06);
+    osc.frequency.exponentialRampToValueAtTime(700,  t + 0.13);
+    env.gain.setValueAtTime(0.18, t);
+    env.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+    osc.start(t); osc.stop(t + 0.16);
+  } catch(e) {}
+}
+
+// ── Eye tracking ──────────────────────────────────────────────────────────────
+function setEyeDirection(x) {
+  // x: negative = left, positive = right, 0 = center
+  const shift = Math.max(-4, Math.min(4, x / 30));
+  document.getElementById('left-iris').style.transform  = `translateX(${shift}px)`;
+  document.getElementById('right-iris').style.transform = `translateX(${shift}px)`;
+}
+
+// ── Tail speed ────────────────────────────────────────────────────────────────
+function setTailSpeed(expr) {
+  const dur = { excited: '0.6s', happy: '1.4s', sad: '4s', guilty: '3s', neutral: '2s' };
+  document.getElementById('mouse-tail').style.setProperty('--tail-dur', dur[expr] || '2s');
+  document.getElementById('mouse-tail').style.animationDuration = dur[expr] || '2s';
+}
+
+// ── Ear wiggle ────────────────────────────────────────────────────────────────
+function wiggleEars() {
+  const le = document.getElementById('left-ear');
+  const re = document.getElementById('right-ear');
+  le.classList.remove('wiggling'); re.classList.remove('wiggling');
+  void le.offsetWidth;
+  le.classList.add('wiggling'); re.classList.add('wiggling');
+  setTimeout(() => { le.classList.remove('wiggling'); re.classList.remove('wiggling'); }, 900);
+}
+
+// ── Typewriter text ───────────────────────────────────────────────────────────
+let typewriterTimer = null;
+function typewriterSet(el, html) {
+  clearInterval(typewriterTimer);
+  // Strip to plain words but preserve HTML tags inline
+  const words = html.split(/(\s+)/);
+  el.innerHTML = '';
+  let i = 0;
+  typewriterTimer = setInterval(() => {
+    if (i >= words.length) { clearInterval(typewriterTimer); return; }
+    el.innerHTML += words[i];
+    i++;
+  }, 55);
+}
+
 // ── Expressions ───────────────────────────────────────────────────────────────
 function setExpression(type) {
   const lb   = document.getElementById('left-brow');
@@ -1028,6 +1105,7 @@ function speakText(text) {
         resolve();
         return;
       }
+      squeak();
       const utt = new SpeechSynthesisUtterance(phrases[i]);
       // Kid voice: slow + high pitch with slight natural variation per phrase
       utt.rate  = 0.82 + Math.random() * 0.1;  // 0.82–0.92, slow and natural
@@ -1076,12 +1154,18 @@ async function showSegment(index) {
   setGesture(seg.gesture || 'normal');
   setSpotlight(expr);
 
+  // Tail speed + ear wiggle
+  setTailSpeed(expr);
+  if (expr === 'excited' || expr === 'surprised') wiggleEars();
+
+  // Eye tracking — look in direction of movement
+  const x   = seg.x || 0;
+  const zoom = seg.zoom || 1;
+  setEyeDirection(x);
+
   // Movement
   const mc  = document.getElementById('mouse-container');
   const svg = document.getElementById('mouse-svg');
-  const x   = seg.x || 0;
-  const zoom = seg.zoom || 1;
-
   mc.classList.remove('bouncing', 'jumping');
   svg.classList.remove('walking');
 
@@ -1091,10 +1175,9 @@ async function showSegment(index) {
     setTimeout(() => mc.classList.remove('jumping'), 650);
     setTimeout(() => mc.classList.add('bouncing'), 660);
   } else if (seg.move === 'walk') {
-    // Flash the walking animation for the duration of the CSS transition
     svg.classList.add('walking');
     mc.style.transform = `translateX(calc(-50% + ${x}px)) scale(${zoom})`;
-    setTimeout(() => svg.classList.remove('walking'), 850);
+    setTimeout(() => { svg.classList.remove('walking'); setEyeDirection(0); }, 900);
     if (expr === 'excited') mc.classList.add('bouncing');
   } else {
     mc.style.transform = `translateX(calc(-50% + ${x}px)) scale(${zoom})`;
@@ -1111,19 +1194,19 @@ async function showSegment(index) {
     setTimeout(() => cheese.style.transform = '', 300);
   }
 
-  // Bubble pop-in
+  // Bubble pop-in with typewriter text
   const bubble = document.getElementById('speech-bubble');
   const textEl = document.getElementById('speech-text');
   bubble.classList.remove('pop');
   bubble.style.opacity = '0';
 
-  textEl.innerHTML = seg.text;
   const speechPromise = speakText(seg.text);
 
   await sleep(40);
   bubble.style.opacity = '';
-  void bubble.offsetWidth; // force reflow
+  void bubble.offsetWidth;
   bubble.classList.add('pop');
+  typewriterSet(textEl, seg.text);
 
   await speechPromise;
   await sleep(800);
